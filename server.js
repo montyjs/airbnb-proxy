@@ -2,10 +2,16 @@ const express = require('express');
 const path = require('path');
 const proxy = require('http-proxy-middleware');
 const app = express();
+const redis = require('redis');
+const fetch = require('node-fetch');
+const client = redis.createClient();
+const template = require('./template.js');
 
-app.get('/', function(req, res) {
-  res.redirect('/listings/1');
-});
+// app.get('/', function(req, res) {
+//   res.redirect('/listings/1');
+// });
+const reviews = 'http://ec2-54-202-47-91.us-west-2.compute.amazonaws.com/'
+const host = 'http://ec2-54-189-186-19.us-west-2.compute.amazonaws.com/'
 
 app.use(express.static('public'));
 
@@ -14,33 +20,47 @@ app.get('/listings/:id', function(req, res) {
   res.sendFile(reactPath);
 });
 
-app.use(
-  '/api/listings/:id/header',
-  proxy({
-    target: 'http://127.0.0.1:3001'
-  })
-);
+const generateRandomId = () => {
+  return 5;
+}
 
-app.use(
-  '/api/listings/:id/tour',
-  proxy({
-    target: 'http://127.0.0.1:3002'
-  })
-);
+app.get('/:id', (req, res) => {
+  const id = req.params.id === 'randy' ? generateRandomId() : req.params.id;
+  // Redis check for id in cache
+  client.get(id, (err, html) => {
+    if (err) {
+      console.log(err);
+    }
+    if (html) {
+      res.send(html);
+    } else { // No cache, so fetch HTML
 
-app.use(
-  '/api/listings/:id/amenities',
-  proxy({
-    target: 'http://127.0.0.1:3003'
-  })
-);
+      const str1 = fetch(`${reviews}/proxy/${id}`)
+        .then(res => res.text())
+        .then(data => data);
+      const str2 = fetch(`http://ec2-54-202-47-91.us-west-2.compute.amazonaws.com/proxy/${id}`)
+        .then(res => res.text())
+        .then(data => data);
 
-app.use(
-  '/api/listings/:id/reviews',
-  proxy({
-    target: 'http://127.0.0.1:3004'
-  })
-);
+      const str3 = fetch(`http://ec2-54-202-47-91.us-west-2.compute.amazonaws.com/proxy/${id}`)
+        .then(res => res.text())
+        .then(data => data);
+
+      const str4 = fetch(`http://ec2-54-202-47-91.us-west-2.compute.amazonaws.com/proxy/${id}`)
+        .then(res => res.text())
+        .then(data => data);
+
+      Promise.all([str1, str2, str3, str4])
+      .then(data => template(data[0]))
+      .then(html => {
+        console.log(html);
+        // client.set(id, html)
+        res.send(html);
+      })
+      .catch(err => res.status(400).send(err));
+    }
+  });
+});
 
 // app.use(
   // '/api/listings/:id/host',
@@ -49,31 +69,9 @@ app.use(
   // })
 // );
 
-app.listen(3000, () => console.log('Listening on port 3000!'));
-
-// var express = require('express')
-// var proxy = require('http-proxy-middleware')
- 
-// // proxy middleware options
-// var options = {
-//   target: 'http://www.example.org', // target host
-//   changeOrigin: true, // needed for virtual hosted sites
-//   ws: true, // proxy websockets
-//   pathRewrite: {
-//     '^/api/old-path': '/api/new-path', // rewrite path
-//     '^/api/remove/path': '/path' // remove base path
-//   },
-//   router: {
-//     // when request.headers.host == 'dev.localhost:3000',
-//     // override target 'http://www.example.org' to 'http://localhost:8000'
-//     'dev.localhost:3000': 'http://localhost:8000'
-//   }
-// }
- 
-// // create the proxy (without context)
-// var exampleProxy = proxy(options)
- 
-// // mount `exampleProxy` in web server
-// var app = express()
-// app.use('/api', exampleProxy)
-// app.listen(3000)
+app.listen(3000, err => {  
+  if (err) {
+    return console.log(err)
+  }
+  console.log('Listening on port 3000!')  
+});
