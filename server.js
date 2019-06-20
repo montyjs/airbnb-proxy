@@ -1,14 +1,13 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const proxy = require('http-proxy-middleware');
-// const redis = require('redis');
+const redis = require('redis');
 const fetch = require('node-fetch');
 const template = require('./template.js');
 
 const app = express();
-// const client = redis.createClient();
-// client.auth(process.env.REDIS_CRED);
+const client = redis.createClient();
+client.auth(process.env.REDIS_CRED);
 
 const reviews = 'http://ec2-54-202-47-91.us-west-2.compute.amazonaws.com';
 const host = 'http://ec2-54-189-186-19.us-west-2.compute.amazonaws.com';
@@ -48,16 +47,12 @@ app.get('/:id?', (req, res) => {
           .then(res => res.text())
           .then(data => data);
       });
-      
-      const tourFetch = fetchHTMLString(tour);
-      const amenitiesFetch = fetchHTMLString(amenities);
-      const reviewsFetch = fetchHTMLString(reviews);
-      const hostFetch = fetchHTMLString(host);
+      const services = [fetchHTMLString(tour), fetchHTMLString(amenities), fetchHTMLString(reviews), fetchHTMLString(host)];
 
-      Promise.all([ tourFetch, amenitiesFetch, reviewsFetch, hostFetch ])
+      Promise.all(services)
       .then(data => template(...data))
       .then(html => {
-        // client.set(id, html)
+        client.set(id, html)
         res.send(html);
       })
       .catch(err => res.status(400).send(err));
