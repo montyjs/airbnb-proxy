@@ -1,4 +1,5 @@
 require('dotenv').config();
+require('newrelic');
 const express = require('express');
 const path = require('path');
 const redis = require('redis');
@@ -50,12 +51,12 @@ app.get('/:id?', (req, res) => {
       const services = [fetchHTMLString(tour), fetchHTMLString(amenities), fetchHTMLString(reviews), fetchHTMLString(host)];
 
       Promise.all(services)
-      .then(data => template(...data))
-      .then(html => {
-        client.set(id, html)
-        res.send(html);
-      })
-      .catch(err => res.status(400).send(err));
+        .then(data => template(...data))
+        .then(html => {
+          client.set(id, html);
+          res.send(html);
+        })
+        .catch(err => res.status(400).send(err));
     }
   });
 });
