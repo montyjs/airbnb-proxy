@@ -2,9 +2,9 @@ const express = require('express');
 const path = require('path');
 const proxy = require('http-proxy-middleware');
 const app = express();
-// const redis = require('redis');
+const redis = require('redis');
 const fetch = require('node-fetch');
-// const client = redis.createClient();
+const client = redis.createClient();
 const template = require('./template.js');
 
 // app.get('/', function(req, res) {
@@ -23,11 +23,14 @@ app.get('/listings/:id', function(req, res) {
 });
 
 const generateRandomId = () => {
-  return '5';
+  const cached = 10000000 - Math.floor(Math.random() * 20000);
+  const probablyNotCached = Math.floor(Math.random() * 10000000);
+  const randoms = [cached, cached, probablyNotCached];
+  return randoms[Math.floor(Math.random() * 3)];
 }
 
 app.get('/:id', (req, res) => {
-  const id = req.params.id === 'randy' ? generateRandomId() : req.params.id;
+  const id = !req.params.id.match(/^\d+$/) ? generateRandomId() : req.params.id;
   console.log('before redis')
   // Redis check for id in cache
   client.get(id, (err, html) => {
