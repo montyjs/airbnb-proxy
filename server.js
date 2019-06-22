@@ -12,13 +12,9 @@ client.auth(process.env.REDIS_CRED);
 
 const reviews = 'http://ec2-54-202-47-91.us-west-2.compute.amazonaws.com';
 const host = 'http://ec2-54-189-186-19.us-west-2.compute.amazonaws.com';
-const tour = 'http://ec2-54-189-186-19.us-west-2.compute.amazonaws.com';
-const amenities = 'http://ec2-54-189-186-19.us-west-2.compute.amazonaws.com';
+const tour = 'http://ec2-54-188-57-59.us-west-2.compute.amazonaws.com';
+const amenities = 'http://ec2-18-236-159-152.us-west-2.compute.amazonaws.com';
 
-app.get('/listings/:id', function(req, res) {
-  const reactPath = path.join(__dirname, '/public/index.html');
-  res.sendFile(reactPath);
-});
 
 const generateRandomId = () => {
   const cached = 10000000 - Math.floor(Math.random() * 20000);
@@ -34,15 +30,15 @@ app.get('/:id?', (req, res) => {
       ? req.params.id 
       : generateRandomId();
   // Redis check for id in cache
-  client.get(id, (err, html) => {
-    if (err) {
-      console.log(err);
-    }
-    if (html) {
-      console.log('got html');
-      res.send(html);
+    client.get(id, (err, html) => {
+      if (err) {
+        console.log(err);
+      }
+      if (html) {
+        console.log('got html');
+        res.send(html);
 
-    } else { /* if no cache, fetch HTML from services */
+      } else { /* if no cache, fetch HTML from services */
       const fetchHTMLString = (url => {
         return fetch(`${url}/proxy/${id}`)
           .then(res => res.text())

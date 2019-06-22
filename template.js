@@ -1,4 +1,4 @@
-const template = (str1 = '<div>So, I herd you liek mudkipz</div>', str2 = '<div>Im a smelly buttface</div>', str3 = '<div>Im a dirty hippy</div>', str4 = '<div>I like turtles</div>') => {
+const template = (str1 = '<div>So, I herd you liek mudkipz</div>', str2 = '<div>Im a smelly buttface</div>', str3 = '<div>Im a dirty pooface</div>', str4 = '<div>I like turtles</div>') => {
   return `
     <!DOCTYPE html>
     <html lang="en">
